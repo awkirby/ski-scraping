@@ -86,18 +86,30 @@ for page in range(1, pages+1, 1):
 
         # Get ratings information
         stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div/div'
-        resort_stars = resort.xpath(stars_path)
+        resort_stars = resort.find_element_by_xpath(stars_path)
         resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
 
-        # Get altitude information
-        altitude_info = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]')[0]
-        altitude_text = [a.text for a in altitude_info]
-        resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
-        resort_info["Elevation Change"] = resort_elevation_change
-        resort_info["Base Elevation"] = resort_base_height
-        resort_info["Max Elevation"] = resort_max_height
+        # Get altitude and piste length information
+        altitude_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]'
+        altitude_info = resort.find_element_by_xpath(altitude_path)
+        altitude_info = altitude_info.find_elements_by_tag_name('span')
+
+        # Create some checks in case all values are not available
+        if len(altitude_info) == 3:
+            altitude_text = [a.text for a in altitude_info]
+            resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
+            resort_info["Elevation Change"] = resort_elevation_change
+            resort_info["Base Elevation"] = resort_base_height
+            resort_info["Max Elevation"] = resort_max_height
+        elif len(altitude_info) > 0:
+            resort_info["Elevation Change"] = altitude_info.text
+        else:
+            resort_info["Elevation Change"] = None
+
+
 
         # Get piste length information
+        piste_info = resort.find_elements_by_tag_name('span')
         piste_info = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]')[0]
         piste_text = [p.text for p in piste_info]
         resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
