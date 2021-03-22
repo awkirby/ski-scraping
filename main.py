@@ -1,6 +1,7 @@
 import requests
 from lxml import html
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from PIL import Image
 from scraping import get_web_data, ski_resort_info_numbers
 from driver_bot import Bot
@@ -79,19 +80,29 @@ for page in range(1, pages+1, 1):
                             '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]').text
 
         # Get link to more detailed information
-        resort_src = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a')
-        resort_info["Web Link"] = resort_src.get_attribute('href')
+        try:
+            resort_src = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a')
+            resort_info["Web Link"] = resort_src.get_attribute('href')
+        except NoSuchElementException:
+            resort_info["Web Link"] = None
+            pass
+
         resort_info["Page Link"] = "https://www.skiresort.info/ski-resorts/page/{}/".format(page)
 
 
         # Get ratings information
         stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div/div'
-        resort_stars = resort.find_element_by_xpath(stars_path)
-        resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
+        try:
+            resort_stars = resort.find_elements_by_xpath(stars_path)
+            resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
+        except NoSuchElementException:
+            resort_info["Star Rating"] = None
+            pass
 
         # Get altitude and piste length information
         altitude_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]'
-        altitude_info = resort.find_element_by_xpath(altitude_path)
+
+        altitude_info = resort.find_elements_by_xpath(altitude_path)
         altitude_info = altitude_info.find_elements_by_tag_name('span')
 
         # Create some checks in case all values are not available
@@ -110,7 +121,7 @@ for page in range(1, pages+1, 1):
 
         # Get piste length information
         piste_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]'
-        piste_info = resort.find_element_by_xpath(piste_path)
+        piste_info = resort.find_elements_by_xpath(piste_path)
         piste_info = piste_info.find_elements_by_tag_name('span')
 
         # Create some checks
@@ -129,16 +140,16 @@ for page in range(1, pages+1, 1):
         # Get number of ski lifts
         # Assign path because of length
         ski_lift_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[4]/td[2]/ul/li'
-        ski_lifts = resort.find_element_by_xpath(ski_lift_path)
+        ski_lifts = resort.find_elements_by_xpath(ski_lift_path)
         resort_info["Ski Lifts"] = ski_lifts.text
 
         # Get costs (will need some cleaning later)
         costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]'
-        resort_costs = resort.find_element_by_xpath(costs_path)
+        resort_costs = resort.find_elements_by_xpath(costs_path)
         resort_info["Ski Pass Cost"] = resort_costs.text
 
         # Get a picture!
-        photo_link = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
+        photo_link = resort.find_elements_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
         photo_link = photo_link.get_attribute('data-src')
         resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
         # Now download the photo
