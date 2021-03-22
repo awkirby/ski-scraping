@@ -3,6 +3,7 @@ from lxml import html
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from PIL import Image
+from PIL import UnidentifiedImageError
 from scraping import get_web_data, ski_resort_info_numbers
 from driver_bot import Bot
 from time import sleep
@@ -23,13 +24,13 @@ first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 # Calculate the number of pages to scrape
 # Assume first page 50 resorts and subsequent have 200
 # Use numpy's .ceil() function to round up page number
-pages = 5 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
+pages = 7 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
 
 # Get an initial resort number
 resort_number = first_resort
 
 # Loop through pages starting from 1 explicitly
-for page in range(1, pages+1, 1):
+for page in range(5, pages+1, 1):
 
     # Get the web page again
     html_data = get_web_data("https://www.skiresort.info/ski-resorts/page/{}/".format(page))
@@ -142,7 +143,7 @@ for page in range(1, pages+1, 1):
                 resort_info["Black Piste Length"] = piste_length_black
 
             elif len(piste_info) == 1:
-                resort_info["Total Piste Length"] = piste_info.text
+                resort_info["Total Piste Length"] = piste_info[0].text
         except NoSuchElementException:
             resort_info["Total Piste Length"] = None
             resort_info["Blue Piste Length"] = None
@@ -153,22 +154,32 @@ for page in range(1, pages+1, 1):
         # Get number of ski lifts
         # Assign path because of length
         ski_lift_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[4]/td[2]/ul/li'
-        ski_lifts = resort.find_elements_by_xpath(ski_lift_path)
-        resort_info["Ski Lifts"] = ski_lifts.text
-
-        # Get costs (will need some cleaning later)
-        costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]'
-        resort_costs = resort.find_elements_by_xpath(costs_path)
-        resort_info["Ski Pass Cost"] = resort_costs.text
-
-        # Get a picture!
         try:
-            photo_link = resort.find_elements_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
+            ski_lifts = resort.find_element_by_xpath(ski_lift_path)
+            resort_info["Ski Lifts"] = ski_lifts.text
+        except NoSuchElementException:
+            resort_info["Ski Lifts"] = None
+
+            # Get costs (will need some cleaning later)
+        costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]'
+        try:
+            resort_costs = resort.find_element_by_xpath(costs_path)
+            resort_info["Ski Pass Cost"] = resort_costs.text
+        except NoSuchElementException:
+            resort_info["Ski Pass Cost"] = None
+
+            # Get a picture!
+        try:
+            photo_link = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
             photo_link = photo_link.get_attribute('data-src')
-            resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
-            # Now download the photo
-            img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
-            resort_info["Photo"] = img
+            try:
+                resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
+                # Now download the photo
+                img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
+                resort_info["Photo"] = img
+            except UnidentifiedImageError:
+                resort_info["Photo"] = None
+                pass
         except NoSuchElementException:
             resort_info["Photo URL"] = None
             resort_info["Photo"] = None
