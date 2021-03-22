@@ -128,9 +128,9 @@ for page in range(1, pages+1, 1):
 
         # Get number of ski lifts
         # Assign path because of length
-        ski_lift_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[4]/td[2]/ul/li/text()'
-        ski_lifts = resort.xpath(ski_lift_path)[0]
-        resort_info["Total Ski Lifts"] = ski_lifts.replace(" ski lifts", "")
+        ski_lift_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[4]/td[2]/ul/li'
+        ski_lifts = resort.find_element_by_xpath(ski_lift_path)
+        resort_info["Ski Lifts"] = ski_lifts.text
 
         # Get costs (will need some cleaning later)
         costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]/text()'
