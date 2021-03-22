@@ -133,9 +133,9 @@ for page in range(1, pages+1, 1):
         resort_info["Ski Lifts"] = ski_lifts.text
 
         # Get costs (will need some cleaning later)
-        costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]/text()'
-        resort_costs = resort.xpath(costs_path)[0]
-        resort_info["Ski Pass Cost"] = resort_costs
+        costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]'
+        resort_costs = resort.find_element_by_xpath(costs_path)
+        resort_info["Ski Pass Cost"] = resort_costs.text
 
         # Get a picture!
         photo_link = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')[0].get('data-src')
