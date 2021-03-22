@@ -48,43 +48,46 @@ for page in range(1, pages+1, 1):
     print('This page has resorts {} to {} out of {}'.format(first_resort, last_resort, total_resorts))
 
     # Extract the resort data from the current website page
-    #resorts = driver.find_element_by_class_name('panel.panel-default.resort-list-item resort-list-item-image--big')
-    resorts = driver.find_element_by_xpath('//*[@id="resortList"]')#/div')
-    resorts = html.fromstring(resorts.text)
+    # First get the element with all the resorts
+    resorts = driver.find_element_by_xpath('//*[@id="resortList"]')
+    # Get a list of all the resorts
+    resort_list = resorts.find_elements_by_xpath("//*[starts-with(@id, 'resort')]")
+    # Remove the first item in the list as this is the parent element
+    # It also contains 'resort' in its ID
+    resort_list = resort_list[1:]
 
     # Loop through each resort on list
-    for resort in resorts:
-        print(resort.text)
-        break
+    for resort in resort_list:
+
         # IDs as set by the website + just the id number
-        resort_id = resort.get("id")
+        resort_id = resort.get_attribute('id')
         resort_id_num = resort_id.replace("resort", "")
 
         # Instantiate a dictionary and store data
         resort_info = {"Access Order": resort_number, "ID": resort_id_num}
 
-        # Get resort name
+        # Get resort text
+        resort_text = resort.text.splitlines()
 
-        # There are two cases (so far), because of fonts
-        #if resort.xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a/text()')[0] isempty:
-        resort_name = resort.xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a/text()')[0]
-        resort_info["Name"] = resort_name
+        # The name is the first bit of text
+        resort_info["Name"] = resort_text[0]
+
+        # The location needs to be accessed specifically
+        resort_info["Continent"] = resort.find_element_by_xpath(
+                            '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[1]').text
+        resort_info["Country"] = resort.find_element_by_xpath(
+                            '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]').text
 
         # Get link to more detailed information
-        resort_src = resort.xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a')[0].get('href')
-        resort_info["Web Link"] = resort_src
+        resort_src = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a')
+        resort_info["Web Link"] = resort_src.get_attribute('href')
         resort_info["Page Link"] = "https://www.skiresort.info/ski-resorts/page/{}/".format(page)
 
-        # Get location information
-        resort_continent = resort.xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[1]/text()')[0]
-        resort_country = resort.xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]/text()')[0]
-        resort_info["Continent"] = resort_continent
-        resort_info["Country"] = resort_country
 
         # Get ratings information
-        stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div'
-        resort_stars = resort.xpath(stars_path)[0].get('title')[0]
-        resort_info["Star Rating"] = resort_stars
+        stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div/div'
+        resort_stars = resort.xpath(stars_path)
+        resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
 
         # Get altitude information
         altitude_info = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]')[0]
