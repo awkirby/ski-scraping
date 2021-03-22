@@ -80,10 +80,18 @@ for page in range(1, pages+1, 1):
         resort_info["Name"] = resort_text[0]
 
         # The location needs to be accessed specifically
-        resort_info["Continent"] = resort.find_element_by_xpath(
-                            '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[1]').text
-        resort_info["Country"] = resort.find_element_by_xpath(
-                            '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]').text
+        try:
+            resort_info["Continent"] = resort.find_element_by_xpath(
+                                '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[1]').text
+        except NoSuchElementException:
+            resort_info["Continent"] = None
+            pass
+        try:
+            resort_info["Country"] = resort.find_element_by_xpath(
+                                '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]').text
+        except NoSuchElementException:
+            resort_info["Country"] = None
+            pass
 
         # Get link to more detailed information
         try:
@@ -191,9 +199,10 @@ for page in range(1, pages+1, 1):
         # Add to counter
         resort_number += 1
 
-# Create DataFrame to save
-df_resort_info = pd.DataFrame(info)
-# Save file to check TODO: Save to S3
-df_resort_info.to_csv("ski_resort_data.csv")
+    # Save at each page in case of failure
+    # Create DataFrame to save
+    df_resort_info = pd.DataFrame(info)
+    # Save file to check TODO: Save to S3
+    df_resort_info.to_csv("ski_resort_data.csv")
 
 driver.quit()
