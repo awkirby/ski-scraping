@@ -127,7 +127,7 @@ for page in range(1, pages+1, 1):
                 resort_info["Base Elevation"] = resort_base_height
                 resort_info["Max Elevation"] = resort_max_height
             else:
-                resort_info["Elevation Change"] = altitude_info.text
+                resort_info["Elevation Change"] = altitude_info[0].text
         except NoSuchElementException:
             resort_info["Elevation Change"] = None
             pass
