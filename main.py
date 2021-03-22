@@ -38,11 +38,16 @@ for page in range(1, pages+1, 1):
     driver.get("https://www.skiresort.info/ski-resorts/page/{}/".format(page))
     print("Data taken from https://www.skiresort.info/ski-resorts/page/{}/".format(page))
 
-    # Scroll down the page, 10000 was not enough
+    # Scroll down the page part 1, 30000 is not enough
     driver.execute_script(f'window.scrollBy(0, 30000)')
 
-    # Wait a bit in case there is any loading needed, increase later
-    sleep(3.0)
+    # Wait a bit in case there is any loading needed
+    sleep(30.0)
+
+    # Scroll down the page part 2, should get to the end
+    driver.execute_script(f'window.scrollBy(0, 50000)')
+    # Wait a bit in case there is any loading needed
+    sleep(30.0)
 
     first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 
