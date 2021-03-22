@@ -98,7 +98,7 @@ for page in range(1, pages+1, 1):
         # Get ratings information
         stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div/div'
         try:
-            resort_stars = resort.find_elements_by_xpath(stars_path)
+            resort_stars = resort.find_element_by_xpath(stars_path)
             resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
         except NoSuchElementException:
             resort_info["Star Rating"] = None
@@ -106,41 +106,49 @@ for page in range(1, pages+1, 1):
 
         # Get altitude and piste length information
         altitude_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]'
+        try:
+            altitude_info = resort.find_element_by_xpath(altitude_path)
+            altitude_info = altitude_info.find_elements_by_tag_name('span')
 
-        altitude_info = resort.find_elements_by_xpath(altitude_path)
-        altitude_info = altitude_info.find_elements_by_tag_name('span')
-
-        # Create some checks in case all values are not available
-        if len(altitude_info) == 3:
-            altitude_text = [a.text for a in altitude_info]
-            resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
-            resort_info["Elevation Change"] = resort_elevation_change
-            resort_info["Base Elevation"] = resort_base_height
-            resort_info["Max Elevation"] = resort_max_height
-        elif len(altitude_info) > 0:
-            resort_info["Elevation Change"] = altitude_info.text
-        else:
+            # Create some checks in case all values are not available
+            if len(altitude_info) == 3:
+                altitude_text = [a.text for a in altitude_info]
+                resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
+                resort_info["Elevation Change"] = resort_elevation_change
+                resort_info["Base Elevation"] = resort_base_height
+                resort_info["Max Elevation"] = resort_max_height
+            else:
+                resort_info["Elevation Change"] = altitude_info.text
+        except NoSuchElementException:
             resort_info["Elevation Change"] = None
+            pass
 
 
 
         # Get piste length information
         piste_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]'
-        piste_info = resort.find_elements_by_xpath(piste_path)
-        piste_info = piste_info.find_elements_by_tag_name('span')
+        try:
+            piste_info = resort.find_element_by_xpath(piste_path)
+            piste_info = piste_info.find_elements_by_tag_name('span')
 
-        # Create some checks
-        if len(piste_info) > 1:
+            # Create some checks
+            if len(piste_info) > 1:
 
-            piste_text = [p.text for p in piste_info]
-            resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
-            resort_info["Total Piste Length"] = resort_piste_length
-            resort_info["Blue Piste Length"] = piste_length_blue
-            resort_info["Red Piste Length"] = piste_length_red
-            resort_info["Black Piste Length"] = piste_length_black
+                piste_text = [p.text for p in piste_info]
+                resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
+                resort_info["Total Piste Length"] = resort_piste_length
+                resort_info["Blue Piste Length"] = piste_length_blue
+                resort_info["Red Piste Length"] = piste_length_red
+                resort_info["Black Piste Length"] = piste_length_black
 
-        elif len(piste_info) == 1:
-            resort_info["Total Piste Length"] = piste_info.text
+            elif len(piste_info) == 1:
+                resort_info["Total Piste Length"] = piste_info.text
+        except NoSuchElementException:
+            resort_info["Total Piste Length"] = None
+            resort_info["Blue Piste Length"] = None
+            resort_info["Red Piste Length"] = None
+            resort_info["Black Piste Length"] = None
+            pass
 
         # Get number of ski lifts
         # Assign path because of length
@@ -154,12 +162,17 @@ for page in range(1, pages+1, 1):
         resort_info["Ski Pass Cost"] = resort_costs.text
 
         # Get a picture!
-        photo_link = resort.find_elements_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
-        photo_link = photo_link.get_attribute('data-src')
-        resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
-        # Now download the photo
-        img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
-        resort_info["Photo"] = img
+        try:
+            photo_link = resort.find_elements_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
+            photo_link = photo_link.get_attribute('data-src')
+            resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
+            # Now download the photo
+            img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
+            resort_info["Photo"] = img
+        except NoSuchElementException:
+            resort_info["Photo URL"] = None
+            resort_info["Photo"] = None
+            pass
 
         # Add dictionary to list
         info.append(resort_info)
