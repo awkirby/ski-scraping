@@ -138,7 +138,8 @@ for page in range(1, pages+1, 1):
         resort_info["Ski Pass Cost"] = resort_costs.text
 
         # Get a picture!
-        photo_link = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')[0].get('data-src')
+        photo_link = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
+        photo_link = photo_link.get_attribute('data-src')
         resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
         # Now download the photo
         img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
