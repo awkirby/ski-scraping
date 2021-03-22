@@ -109,14 +109,22 @@ for page in range(1, pages+1, 1):
 
 
         # Get piste length information
-        piste_info = resort.find_elements_by_tag_name('span')
-        piste_info = resort.xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]')[0]
-        piste_text = [p.text for p in piste_info]
-        resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
-        resort_info["Total Piste Length"] = resort_piste_length
-        resort_info["Blue Piste Length"] = piste_length_blue
-        resort_info["Red Piste Length"] = piste_length_red
-        resort_info["Black Piste Length"] = piste_length_black
+        piste_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]'
+        piste_info = resort.find_element_by_xpath(piste_path)
+        piste_info = piste_info.find_elements_by_tag_name('span')
+
+        # Create some checks
+        if len(piste_info) > 1:
+
+            piste_text = [p.text for p in piste_info]
+            resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
+            resort_info["Total Piste Length"] = resort_piste_length
+            resort_info["Blue Piste Length"] = piste_length_blue
+            resort_info["Red Piste Length"] = piste_length_red
+            resort_info["Black Piste Length"] = piste_length_black
+
+        elif len(piste_info) == 1:
+            resort_info["Total Piste Length"] = piste_info.text
 
         # Get number of ski lifts
         # Assign path because of length
