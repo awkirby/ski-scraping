@@ -126,13 +126,13 @@ for page in range(1, pages+1, 1):
                 resort_info["Elevation Change"] = resort_elevation_change
                 resort_info["Base Elevation"] = resort_base_height
                 resort_info["Max Elevation"] = resort_max_height
-            else:
+            elif len(altitude_info) == 1:
                 resort_info["Elevation Change"] = altitude_info[0].text
+            else:
+                resort_info["Elevation Change"] = None
         except NoSuchElementException:
             resort_info["Elevation Change"] = None
             pass
-
-
 
         # Get piste length information
         piste_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]'

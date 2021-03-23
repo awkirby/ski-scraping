@@ -36,14 +36,3 @@ def ski_resort_info_numbers(data):
     total_resorts = int(resort_numbers[2])
 
     return first_resort, last_resort, total_resorts
-
-# Useful commands
-# driver.quit() # Stops the window from opening
-
-# For images
-#from PIL import Image
-#import requests
-
-#im = Image.open(requests.get(url, stream=True).raw)
-
-
