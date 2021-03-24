@@ -9,6 +9,10 @@ from driver_bot import Bot
 from time import sleep
 import numpy as np
 import pandas as pd
+import boto3
+
+# Instantiate boto3 client to use aws storage services
+s3 = boto3.client('s3')
 
 # Instantiate a list to store data
 info = []
@@ -184,7 +188,12 @@ for page in range(1, pages+1, 1):
                 resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
                 # Now download the photo
                 img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
-                resort_info["Photo"] = img
+                # Create a name
+                img_name = resort_info["Name"].replace(" ", "_") + "_ID" + resort_id + ".jpg"
+                # Store in aws bucket
+                s3.upload_file(img, 'aicore-akirby', 'ski-scraper/resort-images/' + img_name)
+                resort_info["Photo"] = img_name
+
             except UnidentifiedImageError:
                 resort_info["Photo"] = None
                 pass
@@ -202,7 +211,9 @@ for page in range(1, pages+1, 1):
     # Save at each page in case of failure
     # Create DataFrame to save
     df_resort_info = pd.DataFrame(info)
-    # Save file to check TODO: Save to S3
+    # Save file to check
     df_resort_info.to_csv("ski_resort_data.csv")
+
+s3.upload_file('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
 
 driver.quit()
