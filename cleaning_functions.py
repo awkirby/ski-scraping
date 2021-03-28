@@ -2,7 +2,6 @@ import pandas as pd
 
 # Helpful functions for data cleaning
 
-
 def combine_csv(csv_file_path: list):
     """
     This function imports csv files and
@@ -14,3 +13,11 @@ def combine_csv(csv_file_path: list):
     csv_files = [pd.read_csv(f, index_col=0, usecols=range(1, 20)) for f in csv_file_path]
 
     return pd.concat(csv_files)
+
+
+class CleanSkiData:
+    """
+    Contains a number of helpful functions to clean the data
+    extracted from skiresort.info using the main.py script
+    """
+

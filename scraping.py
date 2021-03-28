@@ -7,6 +7,8 @@ from selenium.common.exceptions import NoSuchElementException
 from PIL import Image
 from PIL import UnidentifiedImageError
 
+from io import BytesIO
+
 from aws import upload_to_aws
 
 
@@ -177,8 +179,12 @@ class ResortScraper:
                 img = Image.open(requests.get(self.content["Photo URL"], stream=True).raw)
                 # Create a name
                 self.content["Photo"] = self.content["Name"].replace(" ", "_") + "_ID" + self.id + ".jpg"
+                # Create an object in memory, aws needs a file to upload
+                mem_obj = BytesIO()
+                img.save(mem_obj, format=img.format)
+                mem_obj.seek(0)
                 # Store in aws bucket
-                upload_to_aws(img, 'aicore-akirby', 'ski-scraper/resort-images/' + self.content["Photo"])
+                upload_to_aws(mem_obj, 'aicore-akirby', 'ski-scraper/resort-images/' + self.content["Photo"])
 
             except UnidentifiedImageError:
                 self.content["Photo"] = None

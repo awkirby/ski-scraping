@@ -5,11 +5,12 @@ from selenium.common.exceptions import NoSuchElementException
 from PIL import Image
 from PIL import UnidentifiedImageError
 from scraping import get_web_data, ski_resort_info_numbers
-from driver_bot import Bot
+from scraping import ResortScraper
 from time import sleep
 import numpy as np
 import pandas as pd
 import boto3
+from aws import upload_to_aws
 
 # Instantiate boto3 client to use aws storage services
 s3 = boto3.client('s3')
@@ -28,7 +29,7 @@ first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 # Calculate the number of pages to scrape
 # Assume first page 50 resorts and subsequent have 200
 # Use numpy's .ceil() function to round up page number
-pages = int(np.ceil((total_resorts - last_resort) / 200) + 1)
+pages = 4 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
 
 # Get an initial resort number
 resort_number = first_resort
@@ -70,140 +71,12 @@ for page in range(1, pages+1, 1):
     # Loop through each resort on list
     for resort in resort_list:
 
-        # IDs as set by the website + just the id number
-        resort_id = resort.get_attribute('id')
-        resort_id_num = resort_id.replace("resort", "")
+        # Instantiate ResortScraper class
+        # This extracts the info in the resort card
+        resort_info = ResortScraper(resort_number, resort)
 
-        # Instantiate a dictionary and store data
-        resort_info = {"Access Order": resort_number, "ID": resort_id_num}
-
-        # Get resort text
-        resort_text = resort.text.splitlines()
-
-        # The name is the first bit of text
-        resort_info["Name"] = resort_text[0]
-
-        # The location needs to be accessed specifically
-        try:
-            resort_info["Continent"] = resort.find_element_by_xpath(
-                                '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[1]').text
-        except NoSuchElementException:
-            resort_info["Continent"] = None
-            pass
-        try:
-            resort_info["Country"] = resort.find_element_by_xpath(
-                                '//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[2]/div/a[2]').text
-        except NoSuchElementException:
-            resort_info["Country"] = None
-            pass
-
-        # Get link to more detailed information
-        try:
-            resort_src = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[1]/div[1]/div[1]/a')
-            resort_info["Web Link"] = resort_src.get_attribute('href')
-        except NoSuchElementException:
-            resort_info["Web Link"] = None
-            pass
-
-        resort_info["Page Link"] = "https://www.skiresort.info/ski-resorts/page/{}/".format(page)
-
-
-        # Get ratings information
-        stars_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[1]/td/a/div/div'
-        try:
-            resort_stars = resort.find_element_by_xpath(stars_path)
-            resort_info["Star Rating"] = resort_stars.get_attribute('data-rank')
-        except NoSuchElementException:
-            resort_info["Star Rating"] = None
-            pass
-
-        # Get altitude and piste length information
-        altitude_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[2]/td[2]'
-        try:
-            altitude_info = resort.find_element_by_xpath(altitude_path)
-            altitude_info = altitude_info.find_elements_by_tag_name('span')
-
-            # Create some checks in case all values are not available
-            if len(altitude_info) == 3:
-                altitude_text = [a.text for a in altitude_info]
-                resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
-                resort_info["Elevation Change"] = resort_elevation_change
-                resort_info["Base Elevation"] = resort_base_height
-                resort_info["Max Elevation"] = resort_max_height
-            elif len(altitude_info) == 1:
-                resort_info["Elevation Change"] = altitude_info[0].text
-            else:
-                resort_info["Elevation Change"] = None
-        except NoSuchElementException:
-            resort_info["Elevation Change"] = None
-            pass
-
-        # Get piste length information
-        piste_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[3]/td[2]'
-        try:
-            piste_info = resort.find_element_by_xpath(piste_path)
-            piste_info = piste_info.find_elements_by_tag_name('span')
-
-            # Create some checks
-            if len(piste_info) > 1:
-
-                piste_text = [p.text for p in piste_info]
-                resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
-                resort_info["Total Piste Length"] = resort_piste_length
-                resort_info["Blue Piste Length"] = piste_length_blue
-                resort_info["Red Piste Length"] = piste_length_red
-                resort_info["Black Piste Length"] = piste_length_black
-
-            elif len(piste_info) == 1:
-                resort_info["Total Piste Length"] = piste_info[0].text
-        except NoSuchElementException:
-            resort_info["Total Piste Length"] = None
-            resort_info["Blue Piste Length"] = None
-            resort_info["Red Piste Length"] = None
-            resort_info["Black Piste Length"] = None
-            pass
-
-        # Get number of ski lifts
-        # Assign path because of length
-        ski_lift_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[4]/td[2]/ul/li'
-        try:
-            ski_lifts = resort.find_element_by_xpath(ski_lift_path)
-            resort_info["Ski Lifts"] = ski_lifts.text
-        except NoSuchElementException:
-            resort_info["Ski Lifts"] = None
-
-            # Get costs (will need some cleaning later)
-        costs_path = '//*[@id="' + resort_id + '"]/div/div[2]/div[2]/table/tbody/tr[5]/td[2]'
-        try:
-            resort_costs = resort.find_element_by_xpath(costs_path)
-            resort_info["Ski Pass Cost"] = resort_costs.text
-        except NoSuchElementException:
-            resort_info["Ski Pass Cost"] = None
-
-            # Get a picture!
-        try:
-            photo_link = resort.find_element_by_xpath('//*[@id="' + resort_id + '"]/div/div[2]/div[1]/a/div/img')
-            photo_link = photo_link.get_attribute('data-src')
-            try:
-                resort_info["Photo URL"] = 'https://www.skiresort.info/' + photo_link
-                # Now download the photo
-                img = Image.open(requests.get(resort_info["Photo URL"], stream=True).raw)
-                # Create a name
-                img_name = resort_info["Name"].replace(" ", "_") + "_ID" + resort_id + ".jpg"
-                # Store in aws bucket
-                s3.upload_file(img, 'aicore-akirby', 'ski-scraper/resort-images/' + img_name)
-                resort_info["Photo"] = img_name
-
-            except UnidentifiedImageError:
-                resort_info["Photo"] = None
-                pass
-        except NoSuchElementException:
-            resort_info["Photo URL"] = None
-            resort_info["Photo"] = None
-            pass
-
-        # Add dictionary to list
-        info.append(resort_info)
+        # Add resort content, a dictionary, to list
+        info.append(resort_info.content)
 
         # Add to counter
         resort_number += 1
@@ -214,6 +87,6 @@ for page in range(1, pages+1, 1):
     # Save file to check
     df_resort_info.to_csv("ski_resort_data.csv")
 
-s3.upload_file('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
+upload_to_aws('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
 
 driver.quit()

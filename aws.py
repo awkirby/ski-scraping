@@ -11,7 +11,14 @@ def upload_to_aws(file, bucket, saved_location):
     """
     s3 = boto3.client('s3')
 
-    upload = s3.upload_file(file, bucket, saved_location)
+    try:
+        upload = s3.upload_file(file, bucket, saved_location)
+
+    # The function could be used for files on drive or image objects
+    # upload_file raises a value error if the file is not string
+    # In this case the alternative upload_fileobj is used
+    except ValueError:
+        upload = s3.upload_fileobj(file, bucket, saved_location)
 
     if upload is True:
         return "{} successfully uploaded to {} bucket".format(file, bucket)
