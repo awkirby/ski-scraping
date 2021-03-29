@@ -27,13 +27,13 @@ first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 # Calculate the number of pages to scrape
 # Assume first page 50 resorts and subsequent have 200
 # Use numpy's .ceil() function to round up page number
-pages = int(np.ceil((total_resorts - last_resort) / 200) + 1)
+pages = 8 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
 
 # Get an initial resort number
 resort_number = first_resort
 
 # Loop through pages starting from 1 explicitly
-for page in range(1, pages+1, 1):
+for page in range(7, pages+1, 1):
 
     # Get the web page again
     html_data = get_web_data("https://www.skiresort.info/ski-resorts/page/{}/".format(page))
@@ -111,7 +111,6 @@ df_clean_info.check_unique()
 
 # Save results
 df_resort_info.to_csv("results/ski_resort_data_clean.csv")
-
 
 upload_to_aws('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
 upload_to_aws('ski_resort_data_clean.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data_clean.csv')
