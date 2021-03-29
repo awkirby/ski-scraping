@@ -1,4 +1,5 @@
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 
 # Helpful functions for data cleaning
 
@@ -28,10 +29,14 @@ class CleanSkiData:
         # returns a breakdown of null values in each column
         return self.data.isnull().mean() * 100
 
-    def drop_empty_cost_rows(self, column="Ski Pass Cost"):
+    def drop_empty_cost_rows(self, columns="Ski Pass Cost"):
         # For a given column, drops any rows with null values
         # Default is Ski Pass Cost, because it is a key value for the project
-        return self.data.dropna(subset=[column])
+        # inplace is set to False by default so the dataframe is returned
+        if type(columns) is not list:
+            columns = [columns]
+
+        self.data.dropna(subset=columns, inplace=True)
 
     def split_cost_columns(self):
         # Split out the cost into 3 columns
@@ -54,15 +59,19 @@ class CleanSkiData:
         self.data["Cost in Euros"] = self.data["Ski Pass Cost"].str[-1]
         self.data["Ski Pass Cost"] = self.data["Ski Pass Cost"].str[1]
 
-    def make_ski_lifts_numerical(self):
-        # Modifies the information in ski lifts column
-        # Leaves only the numerical value
-        self.data["Ski Lifts"] = self.data["Ski Lifts"].str.split().str[0]
+    def make_values_numerical(self, columns):
+        # Where data in a column includes a unit this is removed
+        # Leaves only the numerical values
+        if type(columns) is not list:
+            columns = [columns]
+
+        for column in columns:
+            self.data[column] = self.data[column].str.split().str[0]
 
     def clean_resort_names(self):
         # Removes the phrase "temporarily closed" from ski resort names
         # This information is unnecessary
-        self.data["Name"] = self.data["Name"].str.replace(" (temporarily closed)", "")
+        self.data["Name"] = self.data["Name"].str.replace(" (temporarily closed)", "", regex=False)
 
     def check_unique(self):
         # Confirms there are no duplicate resorts

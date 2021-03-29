@@ -27,13 +27,13 @@ first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 # Calculate the number of pages to scrape
 # Assume first page 50 resorts and subsequent have 200
 # Use numpy's .ceil() function to round up page number
-pages = 8 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
+pages = int(np.ceil((total_resorts - last_resort) / 200) + 1)
 
 # Get an initial resort number
 resort_number = first_resort
 
 # Loop through pages starting from 1 explicitly
-for page in range(7, pages+1, 1):
+for page in range(1, pages+1, 1):
 
     # Get the web page again
     html_data = get_web_data("https://www.skiresort.info/ski-resorts/page/{}/".format(page))
@@ -55,7 +55,7 @@ for page in range(7, pages+1, 1):
 
     first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 
-    print('This page has resorts {} to {} out of {}'.format(first_resort, last_resort, total_resorts))
+    print('This page has resorts {} to {} out of {}\n'.format(first_resort, last_resort, total_resorts))
 
     # Extract the resort data from the current website page
     # First get the element with all the resorts
@@ -92,6 +92,7 @@ for page in range(7, pages+1, 1):
 df_clean_info = CleanSkiData(df_resort_info)
 
 # Get some info on the amount and quality of data
+print("Percentage of missing values in each column:\n")
 print(df_clean_info.check_null_values())
 
 # Remove any rows with no values for cost
@@ -100,8 +101,12 @@ df_clean_info.drop_empty_cost_rows()
 # Split ski pass cost into more useful columns
 df_clean_info.split_cost_columns()
 
-# Make ski lifts a numerical value
-df_clean_info.make_ski_lifts_numerical()
+# For some columns make values numerical
+num_cols = ["Elevation Change (m)", "Base Elevation (m)", "Max Elevation (m)",
+            "Total Piste Length (km)", "Blue Piste Length (km)", "Red Piste Length (km)", "Black Piste Length (km)",
+            "Ski Lifts"]
+
+df_clean_info.make_values_numerical(num_cols)
 
 # Remove unnecessary characters from resort names
 df_clean_info.clean_resort_names()
@@ -110,9 +115,9 @@ df_clean_info.clean_resort_names()
 df_clean_info.check_unique()
 
 # Save results
-df_resort_info.to_csv("results/ski_resort_data_clean.csv")
+df_resort_info.data.to_csv("results/ski_resort_data_clean.csv")
 
-upload_to_aws('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
-upload_to_aws('ski_resort_data_clean.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data_clean.csv')
+upload_to_aws('results/ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
+upload_to_aws('results/ski_resort_data_clean.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data_clean.csv')
 
 driver.quit()

@@ -105,22 +105,22 @@ class ResortScraper:
             if len(altitude_info) == 3:
                 altitude_text = [a.text for a in altitude_info]
                 resort_elevation_change, resort_base_height, resort_max_height = altitude_text[:3]
-                self.content["Elevation Change"] = resort_elevation_change
-                self.content["Base Elevation"] = resort_base_height
-                self.content["Max Elevation"] = resort_max_height
+                self.content["Elevation Change (m)"] = resort_elevation_change
+                self.content["Base Elevation (m)"] = resort_base_height
+                self.content["Max Elevation (m)"] = resort_max_height
             elif len(altitude_info) == 1:
-                self.content["Elevation Change"] = altitude_info[0].text
-                self.content["Base Elevation"] = None
-                self.content["Max Elevation"] = None
+                self.content["Elevation Change (m)"] = altitude_info[0].text
+                self.content["Base Elevation (m)"] = None
+                self.content["Max Elevation (m)"] = None
             else:
-                self.content["Elevation Change"] = None
-                self.content["Base Elevation"] = None
-                self.content["Max Elevation"] = None
+                self.content["Elevation Change (m)"] = None
+                self.content["Base Elevation (m)"] = None
+                self.content["Max Elevation (m)"] = None
 
         except NoSuchElementException:
-            self.content["Elevation Change"] = None
-            self.content["Base Elevation"] = None
-            self.content["Max Elevation"] = None
+            self.content["Elevation Change (m)"] = None
+            self.content["Base Elevation (m)"] = None
+            self.content["Max Elevation (m)"] = None
             pass
 
         # Get piste length information
@@ -134,22 +134,22 @@ class ResortScraper:
 
                 piste_text = [p.text for p in piste_info]
                 resort_piste_length, piste_length_blue, piste_length_red, piste_length_black = piste_text[:4]
-                self.content["Total Piste Length"] = resort_piste_length
-                self.content["Blue Piste Length"] = piste_length_blue
-                self.content["Red Piste Length"] = piste_length_red
-                self.content["Black Piste Length"] = piste_length_black
+                self.content["Total Piste Length (km)"] = resort_piste_length
+                self.content["Blue Piste Length (km)"] = piste_length_blue
+                self.content["Red Piste Length (km)"] = piste_length_red
+                self.content["Black Piste Length (km)"] = piste_length_black
 
             elif len(piste_info) == 1:
-                self.content["Total Piste Length"] = piste_info[0].text
-                self.content["Blue Piste Length"] = None
-                self.content["Red Piste Length"] = None
-                self.content["Black Piste Length"] = None
+                self.content["Total Piste Length (km)"] = piste_info[0].text
+                self.content["Blue Piste Length (km)"] = None
+                self.content["Red Piste Length (km)"] = None
+                self.content["Black Piste Length (km)"] = None
 
         except NoSuchElementException:
-            self.content["Total Piste Length"] = None
-            self.content["Blue Piste Length"] = None
-            self.content["Red Piste Length"] = None
-            self.content["Black Piste Length"] = None
+            self.content["Total Piste Length (km)"] = None
+            self.content["Blue Piste Length (km)"] = None
+            self.content["Red Piste Length (km)"] = None
+            self.content["Black Piste Length (km)"] = None
             pass
 
         # Get number of ski lifts
