@@ -9,11 +9,9 @@ from scraping import ResortScraper
 from time import sleep
 import numpy as np
 import pandas as pd
-import boto3
-from aws import upload_to_aws
 
-# Instantiate boto3 client to use aws storage services
-s3 = boto3.client('s3')
+from aws import upload_to_aws
+from cleaning_functions import CleanSkiData
 
 # Instantiate a list to store data
 info = []
@@ -29,7 +27,7 @@ first_resort, last_resort, total_resorts = ski_resort_info_numbers(html_data)
 # Calculate the number of pages to scrape
 # Assume first page 50 resorts and subsequent have 200
 # Use numpy's .ceil() function to round up page number
-pages = 4 #int(np.ceil((total_resorts - last_resort) / 200) + 1)
+pages = int(np.ceil((total_resorts - last_resort) / 200) + 1)
 
 # Get an initial resort number
 resort_number = first_resort
@@ -75,6 +73,9 @@ for page in range(1, pages+1, 1):
         # This extracts the info in the resort card
         resort_info = ResortScraper(resort_number, resort)
 
+        # Get the web page url
+        resort_info.get_web_page_link(page)
+
         # Add resort content, a dictionary, to list
         info.append(resort_info.content)
 
@@ -84,9 +85,35 @@ for page in range(1, pages+1, 1):
     # Save at each page in case of failure
     # Create DataFrame to save
     df_resort_info = pd.DataFrame(info)
-    # Save file to check
-    df_resort_info.to_csv("ski_resort_data.csv")
+    # Save file to allow checking
+    df_resort_info.to_csv("results/ski_resort_data.csv")
+
+# Clean data using the CleanSkiData class
+df_clean_info = CleanSkiData(df_resort_info)
+
+# Get some info on the amount and quality of data
+print(df_clean_info.check_null_values())
+
+# Remove any rows with no values for cost
+df_clean_info.drop_empty_cost_rows()
+
+# Split ski pass cost into more useful columns
+df_clean_info.split_cost_columns()
+
+# Make ski lifts a numerical value
+df_clean_info.make_ski_lifts_numerical()
+
+# Remove unnecessary characters from resort names
+df_clean_info.clean_resort_names()
+
+# Confirm all values are unique
+df_clean_info.check_unique()
+
+# Save results
+df_resort_info.to_csv("results/ski_resort_data_clean.csv")
+
 
 upload_to_aws('ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
+upload_to_aws('ski_resort_data_clean.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data_clean.csv')
 
 driver.quit()

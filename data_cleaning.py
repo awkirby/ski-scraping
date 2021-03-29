@@ -1,13 +1,10 @@
 import pandas as pd
-import matplotlib as plt
 
 from cleaning_functions import combine_csv
 
 # Lets play around with our data
 # This script is purely for exploratory purposes
-
-#file_names = ["ski_resort_data_p1-7.csv", "ski_resort_data_p8-15.csv", "ski_resort_data.csv"]
-#df_ski_resorts = combine_csv(file_names)
+# It has been implemented in the CleanSkiClass
 
 df_ski_resorts = pd.read_csv("ski_resort_data_full.csv", index_col=0, usecols=range(1, 18))
 
