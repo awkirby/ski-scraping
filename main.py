@@ -115,7 +115,7 @@ df_clean_info.clean_resort_names()
 df_clean_info.check_unique()
 
 # Save results
-df_resort_info.data.to_csv("results/ski_resort_data_clean.csv")
+df_clean_info.data.to_csv("results/ski_resort_data_clean.csv")
 
 upload_to_aws('results/ski_resort_data.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data.csv')
 upload_to_aws('results/ski_resort_data_clean.csv', 'aicore-akirby', 'ski-scraper/ski_resort_data_clean.csv')
